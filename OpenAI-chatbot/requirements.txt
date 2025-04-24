@@ -1,0 +1,3 @@
+openai-agents[litellm]
+python-dotenv
+chainlit

@@ -1,0 +1,22 @@
+[project]
+name = "openai-chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mubashar-Bashir", email = "mubasharbashir003@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "chainlit>=2.5.5",
+    "openai-agents[litellm]>=0.0.12",
+    "python-dotenv>=1.1.0",
+]
+
+[project.scripts]
+openai-chatbot1 = "openai_chatbot:main"
+openai-chatbot = "openai_chatbot.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
