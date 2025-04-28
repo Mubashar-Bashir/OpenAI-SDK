@@ -1,0 +1,105 @@
+import os
+from dotenv import load_dotenv, find_dotenv
+import chainlit as cl
+from agents import Agent, Runner, set_tracing_disabled, ItemHelpers
+from openai import AsyncOpenAI
+from agents.extensions.models.litellm_model import LitellmModel
+import asyncio
+from typing import cast
+from openai.types.responses import ResponseTextDeltaEvent
+
+#Load environment variables from .env file
+load_dotenv(find_dotenv())
+set_tracing_disabled(disabled=True)
+#SET GEMINI_API_KEY
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
+
+# Check if the API key is present; if not, raise an error
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY is not set. Please ensure it is defined in your .env file.")
+
+
+#Set Model from .ENV file
+MODEL = os.getenv("MODEL") or "gemini/gemini-2.0-flash" #Default to gemini-1.5-turbo if not set in .env
+if not MODEL:
+    raise ValueError("MODEL is not set. Please ensure it is defined in your .env file.")
+print(f"Using model >>>> : {MODEL}")
+
+
+
+
+#chainlit conversation UI for the AI HUB General Assistant
+
+#chainlit UI startup message Greetings introduction
+@cl.on_chat_start
+async def start_conversation():
+    #Set Litellm model instance for using Gemini API, and Model name
+    litellm_model = LitellmModel(
+        model=MODEL,
+        api_key=GEMINI_API_KEY
+    )
+    #Agent for AI HUB General Assistant
+    ai_hub_agent:Agent = Agent(
+        name="AI_HUB_General_Assistant",
+        instructions="An AI HUB assistant that can answer questions and provide information on a specific topics.",
+        model=litellm_model,
+    )
+    #chainlit Message persistence using chat_history
+    """Set up the chat session when a user connects."""
+    # Initialize an empty chat history in the session.
+    cl.user_session.set("chat_history", []) #chat_history=[]
+    # set Agent instance in the session
+    cl.user_session.set("ai_hub_agent", ai_hub_agent)
+    
+    
+    
+    await cl.Message(
+        content="Hello! I am your AI HUB assistant. How can I help you today?",
+    ).send()
+#chainlit UI for the AI HUB General Assistant messgesages persistence using chat_history
+@cl.on_message
+async def main(message: cl.Message):
+    """Process incoming messages and generate responses."""
+    # Send a thinking message 
+    ai_hub_agent: Agent = cast(Agent, cl.user_session.get("ai_hub_agent"))
+    # config: RunConfig = cast(RunConfig, cl.user_session.get("config"))
+
+    # Retrieve the chat history from the session.
+    history = cl.user_session.get("chat_history") or []
+    
+    # Append the user's message to the history.
+    history.append({"role": "user", "content": message.content})
+    
+    # Create a new message object for streaming
+    msg = cl.Message(content="Thinking...")
+    await msg.send()
+    
+    
+    try:
+        print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+        result = Runner.run_streamed(starting_agent = ai_hub_agent,
+                    input=history)
+         # Stream the response token by token
+        async for event in result.stream_events():
+            if event.type == "raw_response_event" and hasattr(event.data, 'delta'):
+                token = event.data.delta
+                await msg.stream_token(token)  
+        ######################################################### 
+        # Append the assistant's response to the history.
+        history.append({"role": "assistant", "content": msg.content})
+
+        # Update the message content with the final response
+        
+        await msg.update()
+        # Update the session with the new history. overwrite the old history
+        cl.user_session.set("chat_history", history)
+
+        # Optional: Log the interaction
+        print(f"User: {message.content}")
+        print(f"Assistant: {msg.content}")
+
+    except Exception as e:
+        msg.content = f"Error: {str(e)}"
+        await msg.update()
+        print(f"Error: {str(e)}")
+    

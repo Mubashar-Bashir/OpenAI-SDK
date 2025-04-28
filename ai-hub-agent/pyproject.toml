@@ -1,6 +1,6 @@
 [project]
-name = "openai-chatbot"
-version = "0.1.0"
+name = "ai-hub-agent"
+version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -9,14 +9,11 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "chainlit>=2.5.5",
-    "litellm>=1.67.2",
-    "openai-agents[litellm]>=0.0.12",
-    "python-dotenv>=1.1.0",
+    "openai-agents[litellm]>=0.0.13",
 ]
 
 [project.scripts]
-openai-chatbot1 = "openai_chatbot:main"
-openai-chatbot = "openai_chatbot.app:main"
+ai-hub-agent = "ai_hub_agent:main"
 
 [build-system]
 requires = ["hatchling"]
