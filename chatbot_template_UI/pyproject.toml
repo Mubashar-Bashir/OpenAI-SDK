@@ -7,4 +7,5 @@ requires-python = ">=3.12"
 dependencies = [
     "chainlit>=2.5.5",
     "openai-agents[litellm]>=0.0.13",
+    "pydantic[email]>=2.11.3",
 ]
