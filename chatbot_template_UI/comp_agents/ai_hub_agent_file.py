@@ -3,7 +3,7 @@ from comp_agents.model_shared import litellm_model
 # from comp_agents.model_shared import litellm_model
 import sys
 from pathlib import Path
-from .admission_agent import AdmissionSchema
+from .admission_agent import AdmissionSchema, FeePayment
 from pydantic import BaseModel, Field, EmailStr
 
 sys.path.append(str(Path(__file__).resolve().parent))
@@ -139,6 +139,54 @@ ai_hub_agent_tool = ai_hub_agent.as_tool(
     assisting the  process at AI HUB Institute.""",
 )
 
+
+############################## Fee Agent ###########################
+
+# Define the fee collecting agent
+fee_collecting_agent: Agent = Agent(
+    name="AI HUB FEE COLLECTING AGENT",
+    instructions="""You are an AI HUB Fee Collecting Agent for the AI HUB Institute’s Advanced AI Class program. Your role is to assist users with the fee payment process by providing information about the fee structure, payment methods, and guiding them to fill out the fee payment form. Your responses must conform to the provided FeePayment schema for payment-related interactions.
+
+    **Fee Structure**:
+    - Seminar Fee: PKR 5,000
+    - Registration Fee: PKR 10,000
+    - Course Fee: PKR 50,000 per quarter (4 quarters in total)
+
+    **Payment Details**:
+    - Payment methods: Bank Transfer, Cash, or Online Payment (contact AI HUB for specific instructions).
+    - Payments must be completed before the start of the seminar, registration, or respective quarter.
+    - For payment confirmation or issues, contact WhatsApp: 0345-1122999 or Email: aihub.nsk@gmail.com.
+
+    **Your Responsibilities**:
+    - Provide accurate information about the fee structure and payment process.
+    - Assist users in filling out the fee payment form, ensuring the response adheres to the FeePayment schema.
+    - Politely decline to answer questions unrelated to fee payments and redirect users to the AI HUB Triage Agent.
+    - Communicate professionally and courteously at all times.
+
+    **Guidelines for Unrelated Queries**:
+    - If a user asks about course content, eligibility, or other non-fee-related topics, respond with: "I’m sorry, I can only assist with fee payment-related queries. Please contact the AI HUB team at 0345-1122999 or aihub.nsk@gmail.com for other inquiries."
+
+    **Fee Payment Schema**:
+    The schema is defined as a Pydantic model with the following fields:
+    - name: Full name of the user (string, required)
+    - contact_number: User’s phone number, preferably WhatsApp (string, required)
+    - email: User’s email address (string, required)
+    - fee_type: Type of fee (Seminar, Registration, or Course) (string, required)
+    - quarter: Quarter for course fee (e.g., Q1, Q2, Q3, Q4) or None for other fees (string or null, optional)
+    - payment_method: Preferred payment method (Bank Transfer, Cash, or Online) (string, required)
+    - transaction_id: Transaction ID if payment is made, otherwise None (string or null, optional)
+    """,
+    model=litellm_model,  # Using a model that supports response_schema
+    # output_type=FeePayment,  # Enforce structured output using Pydantic model
+)
+
+# Define the fee collection tool
+ai_fee_collection_tool = fee_collecting_agent.as_tool(
+    tool_name="AI_HUB_FEE_COLLECTING_AGENT",
+    tool_description="""AI HUB Fee Collecting Agent for assisting with the 
+    fee payment process for the AI HUB Institute’s 
+    Advanced AI Class program. Returns structured output conforming to the FeePayment schema.""",
+)
 ################## Triage Agent #######################
 # Agent for triaging user queries to the appropriate agent
 # # Define a triage agent that delegates tasks
@@ -191,7 +239,6 @@ triage_agent = Agent(
     - Query: "Can you help with something else?" → Request clarification and provide contact details
     """,
     # tools=[ai_hub_agent_tool, ai_admission_tool], # Retain existing tools if applicable
-    handoffs=[ai_hub_agent, admission_agent],
+    handoffs=[ai_hub_agent, admission_agent,fee_collecting_agent],  # Specify the agents to hand off to
     model=litellm_model,
 )
-    

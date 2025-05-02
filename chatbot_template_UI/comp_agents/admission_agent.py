@@ -58,5 +58,22 @@ admission = AdmissionSchema(**admission_data)
 
 # Convert to JSON
 # pprint(admission.model_dump(mode="json" , exclude=None, exclude_unset=True))
+############ # Fee Schema ######################
+from pydantic import BaseModel, Field
 
+class FeePayment(BaseModel):
+    user_id: str = Field(..., description="Unique identifier for the user")
+    name: str = Field(..., description="Full name of the user")
+    contact_number: str = Field(..., description="User's phone number, preferably WhatsApp")
+    email: str = Field(..., description="User's email address")
+    fee_type: str = Field(..., description="Type of fee: Seminar, Registration, or Course")
+    amount: float = Field(..., gt=0, description="Amount to be paid")
+    payment_status: str = Field(..., description="Payment status: Paid, Unpaid, or Partial")
+    payment_date: str = Field(..., description="Date of payment in YYYY-MM-DD format")
+    payment_receipt: str | None = Field(None, description="Payment receipt if available, otherwise None")
+    payment_proof: str | None = Field(None, description="Payment proof if available, otherwise None")
+    ## Q1, Q2, Q3, Q4 litrel for quarter fee
+    quarter: str | None = Field(None, description="Quarter for course fee (e.g., Q1, Q2, Q3, Q4) or None for other fees", pattern="^(Q1|Q2|Q3|Q4)$")
+    payment_method: str = Field(..., description="Preferred payment method: Bank Transfer, Cash, or Online")
+    transaction_id: str | None = Field(None, description="Transaction ID if payment is already made, otherwise None")
 
