@@ -21,6 +21,11 @@ if not MODEL:
 
 print(f"Using model >>> : {MODEL}")
 
+# Initialize the model instance using LiteLLM
+llm_model_instance = LitellmModel(model=MODEL, api_key=GEMINI_API_KEY)
+
+
+
 cl.on_chat_start
 async def start():
     """Set up the chat session when a user connects."""
@@ -57,7 +62,7 @@ async def main(message: cl.Message):
     chat_history.append({"role": "user", "content": message.content})
     print("Message received >>>>>",message)
     # Send a response back to the user
-     try:
+    try:
         print("\n[CALLING_AGENT_WITH_CONTEXT]\n", chat_history, "\n")
         result = Runner.run_sync(starting_agent = ai_hub_agent,
                     input=history,
@@ -68,7 +73,7 @@ async def main(message: cl.Message):
         # Update the thinking message with the actual response
         msg.content = response_content
         await msg.update()
-    
+
         # Update the session with the new history.
         cl.user_session.set("chat_history", result.to_input_list())
         
@@ -80,7 +85,7 @@ async def main(message: cl.Message):
         msg.content = f"Error: {str(e)}"
         await msg.update()
         print(f"Error: {str(e)}")
-       
+        
    
 # @cl.on_chat_start
 # async def start():
