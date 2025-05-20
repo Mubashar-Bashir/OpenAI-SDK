@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from app.core.database import get_session
 from app.models.user import User
@@ -15,7 +15,7 @@ def get_users(session: Session = Depends(get_session)):
 def get_user(user_id: int, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.user_id == user_id)).first()
     if not user:
-        return {"error": "User not found"}
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 @user_router.post("/", response_model=User, tags=["Users"])

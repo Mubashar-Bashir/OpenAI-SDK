@@ -60,13 +60,14 @@ async def main(message: cl.Message):
     # add the message to the chat history
     chat_history = cl.user_session.get("chat_history", [])
     chat_history.append({"role": "user", "content": message.content})
+    history= chat_history
     print("Message received >>>>>",message)
     # Send a response back to the user
     try:
         print("\n[CALLING_AGENT_WITH_CONTEXT]\n", chat_history, "\n")
         result = Runner.run_sync(starting_agent = ai_hub_agent,
                     input=history,
-                    run_config=config)
+                    )
         
         response_content = result.final_output
         

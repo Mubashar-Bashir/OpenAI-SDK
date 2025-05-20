@@ -26,32 +26,20 @@ if not MODEL:
     raise ValueError("MODEL is not set. Please ensure it is defined in your .env file.")
 print(f"Using model >>>> : {MODEL}")
 
-
-
-
-#chainlit conversation UI for the AI HUB General Assistant
-
 #chainlit UI startup message Greetings introduction
 @cl.on_chat_start
 async def start_conversation():
-    #Set Litellm model instance for using Gemini API, and Model name
-    # litellm_model = LitellmModel(
-    #     model=MODEL,
-    #     api_key=GEMINI_API_KEY
-    # )
-    
     #chainlit Message persistence using chat_history
     """Set up the chat session when a user connects."""
     # Initialize an empty chat history in the session.
     cl.user_session.set("chat_history", []) #chat_history=[]
     # set Agent instance in the session with the correct key
     cl.user_session.set("triage_agent", triage_agent)
-    
-    
-    
+    # Send a welcome message to the user.
     await cl.Message(
         content="Hello! I am your AI HUB assistant. How can I help you today?",
     ).send()
+    
 #chainlit UI for the AI HUB General Assistant messgesages persistence using chat_history
 @cl.on_message
 async def main(message: cl.Message):
@@ -62,17 +50,18 @@ async def main(message: cl.Message):
 
     # Retrieve the chat history from the session.
     history = cl.user_session.get("chat_history") or []
-    
+    # print("Message_Content : >>>> ",message.content)
     # Append the user's message to the history.
     history.append({"role": "user", "content": message.content})
-    
+    # print("History : >>>> ",history)
     # Create a new message object for streaming
     msg = cl.Message(content="AI-HuB Assistant : ")
+    # print("Message : >>>> ",msg.content)
     await msg.send()
     
     
     try:
-        print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+        # print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
         result = Runner.run_streamed(starting_agent = triage_agent,
                     input=history)
          # Stream the response token by token
@@ -83,16 +72,15 @@ async def main(message: cl.Message):
         ######################################################### 
         # Append the assistant's response to the history.
         history.append({"role": "assistant", "content": msg.content})
-
-        # Update the message content with the final response
-        
+        print("History with assistant : >>>> ",history)
+        # print("Final Message msg.content: >>>> ",msg.content)
         await msg.update()
         # Update the session with the new history. overwrite the old history
         cl.user_session.set("chat_history", history)
 
         # Optional: Log the interaction
-        print(f"User: {message.content}")
-        print(f"Assistant: {msg.content}")
+        # print(f"User: {message.content}")
+        # print(f"Assistant: {msg.content}")
 
     except Exception as e:
         # Log the error with more details for debugging
